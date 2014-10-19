@@ -6,6 +6,8 @@ angular.module('mvd.contentfulProvider', [])
     var debug = false
       , _push = [].push
       , _slice = [].slice
+      , sysParams = ['id','type','updatedAt','createdAt']
+      , excludeParams = ['limit', 'order', 'content_type']
       , logger
       , _log = function () {
         if (!debug) {
@@ -44,7 +46,20 @@ angular.module('mvd.contentfulProvider', [])
     };
 
     var _buildParams = function (params) {
-      return angular.extend({}, queryOpts, params);
+      var out = {};
+      for (var prop in params) {
+        if (!params.hasOwnProperty(prop)) {
+          continue;
+        }
+        var val = params[prop];
+        if (sysParams.indexOf(prop) >= 0) {
+          prop = 'sys.' + prop;
+        } else if (excludeParams.indexOf(prop) < 0) {
+          prop = 'fields.' + prop;
+        }
+        out[prop] = val;
+      }
+      return angular.extend({}, queryOpts, out);
     }
 
 
@@ -53,13 +68,12 @@ angular.module('mvd.contentfulProvider', [])
         return items;
       };
       var out = [];
-      var sysFields = ['id','type','updatedAt','createdAt'];
       for (var i = 0, ii = items.length; i < ii; i++) {
         var it = items[i]
           , sys = it.sys
           , el = angular.copy(it.fields);
-        for (var j = 0, jj = sysFields.length; j < jj; j++) {
-          var sf = sysFields[j];
+        for (var j = 0, jj = sysParams.length; j < jj; j++) {
+          var sf = sysParams[j];
           // Make sure field doesn't already exist in element
           if (angular.isUndefined(el[sf]) && angular.isDefined(sys[sf])) {
             el[sf] = sys[sf];
@@ -76,13 +90,19 @@ angular.module('mvd.contentfulProvider', [])
     }
 
     ContentfulProvider.prototype = {
-      get: function (id, success, error) {
+      get: function (params, success, error) {
         _log('[get]', arguments);
         var result = {};
-        var params = _buildParams({
-          'sys.id': id,
-          limit: 1
-        });
+        if (!angular.isObject(params)) {
+          // If not object, we assume params is id
+          params = {
+            id: params,
+            limit: 1
+          };
+        } else {
+          params.limit = 1;
+        }
+        params = _buildParams(params);
         this._client.entries(params).then(
           function (res) {
             _log('[get] success', res);
