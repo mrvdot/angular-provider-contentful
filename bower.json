@@ -2,7 +2,7 @@
   "name": "angular-provider-contentful",
   "description": "Content provider for angular-content-feed that connects to Contentful",
   "main": "dist/angular-provider-contentful.js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "dependencies": {
     "angular": "~1.3.0",
     "angular-sanitize": "~1.3.0",

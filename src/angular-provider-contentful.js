@@ -67,6 +67,28 @@ angular.module('mvd.contentfulProvider', [])
       return out;
     }
 
+    var normalizeItem = function (item) {
+      var sys = item.sys
+        , el = angular.copy(item.fields);
+      for (var prop in el) {
+        if (!el.hasOwnProperty(prop)) {
+          continue;
+        }
+        var val = el[prop];
+        if (angular.isObject(val) && angular.isDefined(val.sys) && angular.isDefined(val.fields)) {
+          // Is a contentful entity itself, normalize this as well
+          el[prop] = normalizeItem(val);
+        }
+      }
+      for (var i = 0, ii = sysParams.length; i < ii; i++) {
+        var sf = sysParams[i];
+        // Make sure field doesn't already exist in element
+        if (angular.isUndefined(el[sf]) && angular.isDefined(sys[sf])) {
+          el[sf] = sys[sf];
+        }
+      }
+      return el;
+    }
 
     provider.normalizeItems = function (items) {
       if (!items) {
@@ -74,16 +96,8 @@ angular.module('mvd.contentfulProvider', [])
       };
       var out = [];
       for (var i = 0, ii = items.length; i < ii; i++) {
-        var it = items[i]
-          , sys = it.sys
-          , el = angular.copy(it.fields);
-        for (var j = 0, jj = sysParams.length; j < jj; j++) {
-          var sf = sysParams[j];
-          // Make sure field doesn't already exist in element
-          if (angular.isUndefined(el[sf]) && angular.isDefined(sys[sf])) {
-            el[sf] = sys[sf];
-          }
-        }
+        var item = items[i]
+          , el = normalizeItem(item);
         out.push(el);
       }
       return out;
@@ -112,6 +126,7 @@ angular.module('mvd.contentfulProvider', [])
           function (res) {
             _log('[get] success', res);
             angular.extend(result, provider.normalizeItems(res)[0]);
+            _log('[get] normalized result', result);
             success && success(result);
           },
           function (err) {
@@ -129,6 +144,7 @@ angular.module('mvd.contentfulProvider', [])
           function (res) {
             _log('[load] success', res);
             _push.apply(result, provider.normalizeItems(res));
+            _log('[get] normalized result', result);
             success && success(result);
           },
           function (err) {
