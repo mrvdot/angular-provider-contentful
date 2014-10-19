@@ -16,7 +16,16 @@ describe('Contentful Provider', function () {
         id: 456,
       },
       fields: {
-        text: 'my lorem ipsum again'
+        text: 'my lorem ipsum again',
+        embedded: {
+          sys: {
+            id: 'abc'
+          },
+          fields: {
+            myField: 'is interesting',
+            another: true
+          }
+        }
       }
     }      
   ]
@@ -86,4 +95,13 @@ describe('Contentful Provider', function () {
     expect(result[0]).toEqual(items[0]);
     expect(result[1]).toEqual(items[1]);
   });
+
+  it('should normalize embedded entities as well', function () {
+    var entry = response[1];
+    mockClient._response = [entry];
+    var result = contentful.get(456)
+      , desired = provider.normalizeItems([entry.fields.embedded])[0];
+    expect(result).toEqual(provider.normalizeItems([entry])[0]);
+    expect(result.embedded).toEqual(desired);
+  })
 });
