@@ -37,6 +37,10 @@ angular.module('mvd.contentfulProvider', [])
       return provider;
     }
 
+    provider.setClientOptions = function (opts) {
+      options = opts;
+    }
+
     provider.setDebug = function (val) {
       debug = val;
     }
@@ -46,7 +50,8 @@ angular.module('mvd.contentfulProvider', [])
     };
 
     var _buildParams = function (params) {
-      var out = {};
+      params = angular.extend({}, queryOpts, params);
+      var out = {}; 
       for (var prop in params) {
         if (!params.hasOwnProperty(prop)) {
           continue;
@@ -59,7 +64,7 @@ angular.module('mvd.contentfulProvider', [])
         }
         out[prop] = val;
       }
-      return angular.extend({}, queryOpts, out);
+      return out;
     }
 
 
